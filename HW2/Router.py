@@ -1,4 +1,4 @@
-MAX_INT = 2*31 - 1
+MAX_INT = 2**31 - 1
 
 
 class Router():
@@ -9,6 +9,9 @@ class Router():
         self.table = [[MAX_INT, MAX_INT, MAX_INT]
                       for x in list(range(len(neighboures)))]
         self.updated = False
+        for i in neighboures:
+            self.table[i[0]][0] = i[1]
+            self.table[0][i[0]] = i[1]
 
     def __str__(self) -> str:
         print("neighboures:", self.neighboures, "\n", "table:", self.table)

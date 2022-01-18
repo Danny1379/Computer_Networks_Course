@@ -3,4 +3,4 @@ from router0 import rtinit0
 
 
 if __name__ == "__main__":
-    print(rtinit0())
+    rtinit0()
