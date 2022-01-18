@@ -1,6 +1,12 @@
-def rtinit1():
-    pass
+from Router import MAX_INT, Router
 
 
-def rtupdate1(rcvdpkt):
+NEIGHBORS = {(0, 1), (2, 1), (3, MAX_INT)}  # (node , cost)
+
+
+def rtinit0():
+    router = Router(neighboures=NEIGHBORS)
+
+
+def rtupdate0(rcvdpkt):
     pass

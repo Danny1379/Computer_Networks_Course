@@ -8,3 +8,7 @@ class Router():
         # init empty table
         self.table = [[MAX_INT, MAX_INT, MAX_INT]
                       for x in list(range(len(neighboures)))]
+        self.updated = False
+
+    def __str__(self) -> str:
+        print("neighboures:", self.neighboures, "\n", "table:", self.table)

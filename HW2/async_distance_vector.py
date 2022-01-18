@@ -1,12 +1,6 @@
-def rtinit():
-    pass
+from Router import Router
+from router0 import rtinit0
 
 
-def tolayer2():
-    pass
-
-
-def rtupdate0(rcvdpkt):
-    pass
-
-
+if __name__ == "__main__":
+    print(rtinit0())
