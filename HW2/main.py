@@ -1,4 +1,3 @@
-from msilib.schema import tables
 from Router import Router
 from router0 import rtinit0
 from router1 import rtinit1

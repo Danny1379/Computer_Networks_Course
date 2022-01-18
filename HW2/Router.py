@@ -13,7 +13,9 @@ class Router():
                       for _ in list(range(len(neighboures)+1))]
         self.updated = False
         self.table[node_num][node_num] = 0
+        # list to access other routers for event function
         self.routers = []
+        # set routers costs
         for i in neighboures:
             self.table[node_num][i[0]] = i[1]
 
@@ -67,6 +69,7 @@ class Router():
                 min_dist = cost
         return min_dist
 
+    # get neighbours in form of array
     def get_neighbours(table, src):
         n = []
         for i in range(len(table[src])):
