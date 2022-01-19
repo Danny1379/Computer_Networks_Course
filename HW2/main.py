@@ -13,6 +13,6 @@ if __name__ == "__main__":
     routers.append(rtinit3())
     for r in routers:
         r.routers = routers
-    r = routers[3]
+    r = routers[0]
     r.toLayer2()
     r.print_table()

@@ -9,3 +9,6 @@ def rtinit0():
     print(f"table{router.node_num}", "initialized")
     router.print_table()
     return router
+
+
+# rtupdate defined in Router class
