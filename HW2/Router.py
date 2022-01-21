@@ -1,6 +1,6 @@
 
 
-MAX_INT = 2**31 - 1
+MAX_INT = 2**31 - 1  # maximum integer size in c
 
 
 class Router():
@@ -13,7 +13,7 @@ class Router():
                       for _ in list(range(len(neighboures)+1))]
         self.updated = False
         self.table[node_num][node_num] = 0
-        # list to access other routers for event function
+        # pointer to access other routers for event function
         self.routers = []
         # set routers costs
         for i in neighboures:
@@ -22,15 +22,15 @@ class Router():
     def __str__(self) -> str:
         print("neighboures:", self.neighboures, "\n", "table:", self.table)
 
-    def print_table(self):
+    def print_table(self) -> None:
         for t in self.table:
             print(t)
 
-    def receive_event(self, packet):
+    def receive_event(self, packet) -> None:
         print("event received", self.node_num)
         self.rtUpdate(packet)
 
-    def rtUpdate(self, packet):
+    def rtUpdate(self, packet) -> None:
         self.changed = False
         received_packet = packet[1]
         for i in range(len(self.table)):
@@ -44,16 +44,20 @@ class Router():
             if(self.table[self.node_num][i] > dist):
                 self.table[self.node_num][i] = dist
                 self.changed = True
-
+        # if changed send to all neighboures
         if self.changed == True:
             self.toLayer2()
 
-    def toLayer2(self):
+    # packet is a tuple of src and distance_table
+    def toLayer2(self) -> None:
         packet = (self.node_num, self.table)
         for n in self.neighboures:
-            self.routers[n[0]].receive_event(packet)
+            if(n[1] < MAX_INT):
+                self.routers[n[0]].receive_event(packet)
 
-    def get_min_dist(src, dest, seen_nodes, table, neighboures):
+    # compute minimum distance from src to dest , hold seen_nodes to control node expansion
+
+    def get_min_dist(src, dest, seen_nodes, table, neighboures) -> int:
         if src == dest:
             return 0
         min_dist = MAX_INT
@@ -70,7 +74,7 @@ class Router():
         return min_dist
 
     # get neighbours in form of array
-    def get_neighbours(table, src):
+    def get_neighbours(table, src) -> list:
         n = []
         for i in range(len(table[src])):
             if table[src][i] == MAX_INT or i == src:
