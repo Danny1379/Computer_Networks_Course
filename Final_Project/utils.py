@@ -12,7 +12,6 @@ UPLOADING = "UPLOADING"
 
 def send_message(message, socket) -> bool:
     try:
-        print(message)
         socket.sendall(message)
         return True
     except Exception as e:
