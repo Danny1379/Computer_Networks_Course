@@ -1,5 +1,7 @@
 import socket
 from threading import Thread
+
+from numpy import byte
 from utils import *
 #from _thread import *
 
@@ -46,6 +48,7 @@ class Tracker(Thread):
         port = address[1]
         length = self.get_length(socket)
         name = self.get_file_name(length, socket)
+        self.send_ports(socket, name)
         print(name)
 
     def read_type(self, socket, address) -> int:
@@ -63,9 +66,17 @@ class Tracker(Thread):
         print(self.peers)
 
     def send_ports(self, socket, movie):
-        length = len(self.peers[movie])
-        for port in self.peers[movie]:
-            int.to_bytes(port, length=2, byteorder="little")
+        print(movie in self.peers)
+        if movie in self.peers:
+            length = len(self.peers[movie])
+            message = int.to_bytes(length, length=1, byteorder="little")
+            for port in self.peers[movie]:
+                message += int.to_bytes(port, length=2, byteorder="little")
+        else:
+            length = 0
+            message = int.to_bytes(length, length=1, byteorder="little")
+
+        send_message(message, socket)
 
 
 def main():
