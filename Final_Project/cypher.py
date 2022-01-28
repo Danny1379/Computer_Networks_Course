@@ -1,4 +1,4 @@
-# ceasars cipher implementation
+# caesars cipher implementation for base64 encoded strings
 def encrypt(data, shift):
     encrypted_data = ""
     for c in data:
@@ -11,5 +11,6 @@ def encrypt(data, shift):
     return encrypted_data
 
 
+# decryption is the inversion of encryption
 def decrypt(data, shift):
     return encrypt(data, 26 - shift)

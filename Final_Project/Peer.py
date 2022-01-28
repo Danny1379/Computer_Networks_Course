@@ -7,7 +7,6 @@ from utils import RECEIVING, UPLOADING
 from utils import *
 from threading import Thread
 import base64
-import cypher
 
 
 class Peer(Thread):
@@ -54,7 +53,6 @@ class Peer(Thread):
             make_connection(('localhost', port), socket)
             send_message({"name": name, "type": "list_chunks"}, socket)
             message = receive_message(socket)
-            print("fuck")
             print("message", message)
             available_chunks = message["chunks"]
             for chunk in available_chunks:

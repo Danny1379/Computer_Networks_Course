@@ -18,7 +18,6 @@ class Tracker(Thread):
 
     def handle_request(self, handler_socket, address):
         self.handle_messages(handler_socket, address)
-        print("handled")
 
     def run(self):
         while True:
@@ -44,7 +43,6 @@ class Tracker(Thread):
             for port in self.files[name]['ports']:
                 ports.append(port)
         self.mutex_lock.release()
-        print(size)
         return ports, size
 
     def add_uploader(self, name, port, size) -> None:
@@ -53,6 +51,7 @@ class Tracker(Thread):
             self.files[name] = {"ports": {port}, "size": size}
         self.files[name]['ports'].add(port)
         self.mutex_lock.release()
+        print(f"uploader {port} added for file {name}")
 
     def handle_receive_message(self, socket, message, address) -> None:
         port = address[1]
@@ -60,6 +59,7 @@ class Tracker(Thread):
         ports, size = self.find_ports(name)
         message = {"ports": ports, "size": size}
         send_message(message, socket)
+        print(f"send message to receiver:{message} to {port}")
 
     def handle_peer_leaving(self, message, address):
         port = message["port"]
