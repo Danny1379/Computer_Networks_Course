@@ -28,6 +28,7 @@ def new_socket():
 
 def send_message(message, socket) -> bool:
     message = json.dumps(message)
+    print(message)
     data = message.encode("utf-8")
     try:
         socket.sendall(data)

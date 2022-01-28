@@ -6,6 +6,7 @@ from file import get_file_bytes
 from utils import RECEIVING, UPLOADING
 from utils import *
 from threading import Thread
+import base64
 
 
 class Peer(Thread):
@@ -23,6 +24,7 @@ class Peer(Thread):
     def uploading(self, name):
         if self.mode != UPLOADING:
             return
+        self.receiver_socket = new_socket()
         self.receiver_socket.bind(('localhost', 0))
         s_test = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s_test.connect((TRACKER_IP, TRACKER_PORT))
@@ -36,7 +38,7 @@ class Peer(Thread):
         self.listen_for_request()
 
     def downloading(self, name):
-        socket = self.receiver_socket
+        socket = new_socket()
         socket.connect((TRACKER_IP, TRACKER_PORT))
         self.current_file_name = name
         data = {"name": name, "type": RECEIVING}
@@ -49,20 +51,24 @@ class Peer(Thread):
             socket = new_socket()
             print(port)
             make_connection(('localhost', port), socket)
-            send_message({"name": name, "type": "list_chunk"}, socket)
+            send_message({"name": name, "type": "list_chunks"}, socket)
             message = receive_message(socket)
             print("fuck")
             print("message", message)
             available_chunks = message["chunks"]
             for chunk in available_chunks:
+                socket = new_socket()
+                make_connection(('localhost', port), socket)
                 send_message(
                     {"name": name, "type": "get_chunk", "chunk_number": chunk}, socket)
                 message = receive_message(socket)
-                self.current_file[chunk] = message["chunk"]
+                self.current_file[chunk] = base64.b64decode(
+                    message["chunk"].encode("utf-8"))
             needed_chunks = self.get_needed_chunks(
                 needed_chunks, available_chunks)
             if len(needed_chunks) == 0:
                 break
+            socket = new_socket()
         assemble_file(self.current_file, name)
         socket.close()
 
@@ -74,24 +80,23 @@ class Peer(Thread):
             self.receiver_socket.listen()
             print(self.receiver_socket.getsockname())
             socket, address = self.receiver_socket.accept()
-            print("FUCK")
             Thread(target=self.handle_download, args=(
                 socket, address), daemon=True).start()
 
     def handle_download(self, socket, address):
-        print("hello")
         message = receive_message(socket)
+        print("message", message)
         if message["type"] == "get_chunk":
             name = message["name"]
             chunk_number = message["chunk_number"]
             if self.current_file_name == name:
                 if chunk_number in self.current_file:
                     send_message(
-                        {"type": "chunk", "chunk": self.current_file[chunk_number]}, socket)
+                        {"type": "chunk", "chunk": base64.b64encode(self.current_file[chunk_number]).decode('utf-8')}, socket)
             else:
                 send_message({"type": "not found"}, socket)
         elif message["type"] == "list_chunks":
-            message = {"chunks": self.current_file.keys()}
+            message = {"chunks": list(self.current_file.keys())}
             send_message(message, socket)
         socket.close()
 
@@ -108,7 +113,7 @@ class Peer(Thread):
                 Thread(target=self.uploading, args=(
                     name,), daemon=True).start()
             elif self.mode == IDLE:
-                pass
+                continue
             else:
                 break
 

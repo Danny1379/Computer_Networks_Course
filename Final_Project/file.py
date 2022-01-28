@@ -1,5 +1,6 @@
 
 
+from genericpath import isfile
 from utils import CHUNK_SIZE
 
 # chunk size is 32KByte
@@ -21,7 +22,11 @@ def get_file_bytes(name):
 def assemble_file(file_chunks, name):
     file_bytes = b''
     for i in range(len(file_chunks)):
-        file_bytes += file_chunks[i].encode("utf-8")
-    with open(name+"2", 'wb') as fp:
+        file_bytes += file_chunks[i]
+    if isfile(name):
+        name = name.split('.')
+        name = name[0]+"2"+"."+name[1]
+
+    with open(name, 'wb') as fp:
         fp.write(file_bytes)
     print("file_created")
