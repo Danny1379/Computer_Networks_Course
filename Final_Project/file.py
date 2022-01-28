@@ -23,10 +23,14 @@ def assemble_file(file_chunks, name):
     file_bytes = b''
     for i in range(len(file_chunks)):
         file_bytes += file_chunks[i]
-    if isfile(name):
-        name = name.split('.')
-        name = name[0]+"2"+"."+name[1]
+    count = 0
+    file_name = name
+    while isfile(file_name):
+        count += 1
+        print(count)
+        file_name = name.split('.')
+        file_name = file_name[0]+str(count)+"."+file_name[1]
 
-    with open(name, 'wb') as fp:
+    with open(file_name, 'wb') as fp:
         fp.write(file_bytes)
     print("file_created")

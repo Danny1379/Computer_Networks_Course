@@ -7,6 +7,7 @@ from utils import RECEIVING, UPLOADING
 from utils import *
 from threading import Thread
 import base64
+import cypher
 
 
 class Peer(Thread):
@@ -58,7 +59,10 @@ class Peer(Thread):
             available_chunks = message["chunks"]
             for chunk in available_chunks:
                 socket = new_socket()
-                make_connection(('localhost', port), socket)
+                try:
+                    make_connection(('localhost', port), socket)
+                except:
+                    self.handle_exit(port)
                 send_message(
                     {"name": name, "type": "get_chunk", "chunk_number": chunk}, socket)
                 message = receive_message(socket)
@@ -76,12 +80,25 @@ class Peer(Thread):
         return needed_chunks.symmetric_difference(available_chunks)
 
     def listen_for_request(self):
-        while True:
+        while self.mode == UPLOADING:
             self.receiver_socket.listen()
             print(self.receiver_socket.getsockname())
             socket, address = self.receiver_socket.accept()
+            if self.mode != UPLOADING:
+                print("exiting")
+                socket.close()
+                break
             Thread(target=self.handle_download, args=(
                 socket, address), daemon=True).start()
+        self.handle_exit(self.receiver_socket.getsockname()[1])
+
+    def handle_exit(self, port):
+        message = {"type": EXITING, "port": port,
+                   "file": self.current_file_name}
+        socket = new_socket()
+        make_connection((TRACKER_IP, TRACKER_PORT), socket)
+        send_message(message, socket)
+        socket.close()
 
     def handle_download(self, socket, address):
         message = receive_message(socket)
@@ -104,6 +121,9 @@ class Peer(Thread):
         while True:
             command = input()
             name = command.split(" ")[3]
+            if self.mode == UPLOADING != command.split(" ")[2]:
+                socket = new_socket()
+                make_connection(self.receiver_socket.getsockname(), socket)
             self.mode = command.split(" ")[2]
             print(name)
             if self.mode == RECEIVING:

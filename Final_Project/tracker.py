@@ -61,6 +61,12 @@ class Tracker(Thread):
         message = {"ports": ports, "size": size}
         send_message(message, socket)
 
+    def handle_peer_leaving(self, message, address):
+        port = message["port"]
+        file = message["file"]
+        self.files[file]["ports"].remove(port)
+        print(f"port {port} has been remove from {file} list")
+
     def handle_messages(self, socket, address) -> None:
         message = receive_message(socket)  # self.read_type(socket, address)
         type = message['type']
@@ -68,6 +74,8 @@ class Tracker(Thread):
             self.handle_upload_message(socket, message, address)
         elif type == RECEIVING:
             self.handle_receive_message(socket, message, address)
+        elif type == EXITING:
+            self.handle_peer_leaving(message, address)
         return
 
 
