@@ -1,3 +1,4 @@
+from threading import Lock
 import socket
 from threading import Thread
 
@@ -9,57 +10,58 @@ import json
 class Tracker(Thread):
     def __init__(self) -> None:
         Thread.__init__(self, daemon=True)
-        self.peers = {}
+        self.files = {}
         self.port = TRACKER_PORT
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((TRACKER_IP, TRACKER_PORT))
+        self.mutex_lock = Lock()
 
     def handle_request(self, handler_socket, address):
-        self.read_message(handler_socket, address)
+        self.handle_messages(handler_socket, address)
         print("handled")
 
     def run(self):
         while True:
             self.socket.listen()
             handler, address = self.socket.accept()
-            Thread(target=self.handle_request(
+            t1 = Thread(target=self.handle_request, args=(
                 handler, address), daemon=True)
-            # if "n" == input("\ncontinue ?\n"):
-            #    break
+            t1.start()
 
     def handle_upload_message(self, socket, message, address):
-        port = address[1]
+        port = message["port"]
         name = message["name"]
-        self.add_uploader(name, port)
-        # if not (name in self.peers):
-        #     self.peers[name] = {port}
-        # self.peers[name].add(port)
+        size = message["size"]
+        self.add_uploader(name, port, size)
         socket.close()
 
     def find_ports(self, name) -> list:
+        self.mutex_lock.acquire()
         ports = []
-        if name in self.peers:
-            for port in self.peers[name]:
+        size = 0
+        if name in self.files:
+            size = self.files[name]['size']
+            for port in self.files[name]['ports']:
                 ports.append(port)
-        return ports
+        self.mutex_lock.release()
+        print(size)
+        return ports, size
 
-    def add_uploader(self, name, port) -> None:
-        if not (name in self.peers):
-            self.peers[name] = {port}
-        self.peers[name].add(port)
+    def add_uploader(self, name, port, size) -> None:
+        self.mutex_lock.acquire()
+        if not (name in self.files):
+            self.files[name] = {"ports": {port}, "size": size}
+        self.files[name]['ports'].add(port)
+        self.mutex_lock.release()
 
     def handle_receive_message(self, socket, message, address) -> None:
         port = address[1]
         name = message["name"]
-        ports = self.find_ports(name)
-        message = {"ports": ports}
+        ports, size = self.find_ports(name)
+        message = {"ports": ports, "size": size}
         send_message(message, socket)
 
-    def read_type(self, socket, message, address) -> int:
-        type = receive_data(1, socket)
-        return int.from_bytes(type, "little")
-
-    def read_message(self, socket, address) -> None:
+    def handle_messages(self, socket, address) -> None:
         message = receive_message(socket)  # self.read_type(socket, address)
         type = message['type']
         if type == UPLOADING:

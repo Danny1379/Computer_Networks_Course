@@ -1,4 +1,5 @@
 import json
+import socket
 # file to hold extra functions and constant
 TRACKER_PORT = 8080
 TRACKER_IP = "localhost"
@@ -6,12 +7,23 @@ TRACKER_IP = "localhost"
 
 # define peer states
 
-RECEIVING = "RECEIVING"
+RECEIVING = "receive"
 IDLE = "IDLE"
-UPLOADING = "UPLOADING"
+UPLOADING = "send"
 EXITING = "EXITING"
 
 BUFFER = 2**16-1
+
+# chunks
+CHUNK_SIZE = 32 * 2**10  # 32 KByte chunk size
+
+
+def make_connection(address, socket):
+    socket.connect(address)
+
+
+def new_socket():
+    return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
 def send_message(message, socket) -> bool:
@@ -36,5 +48,4 @@ def receive_data(socket) -> bytes:
 
 def receive_message(socket) -> dict:
     data = receive_data(socket).decode('utf-8')
-    print(data)
     return json.loads(data)
