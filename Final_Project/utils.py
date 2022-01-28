@@ -1,3 +1,4 @@
+import json
 # file to hold extra functions and constant
 TRACKER_PORT = 8080
 TRACKER_IP = "localhost"
@@ -8,11 +9,16 @@ TRACKER_IP = "localhost"
 RECEIVING = "RECEIVING"
 IDLE = "IDLE"
 UPLOADING = "UPLOADING"
+EXITING = "EXITING"
+
+BUFFER = 2**16-1
 
 
 def send_message(message, socket) -> bool:
+    message = json.dumps(message)
+    data = message.encode("utf-8")
     try:
-        socket.sendall(message)
+        socket.sendall(data)
         return True
     except Exception as e:
         print(e)
@@ -23,23 +29,12 @@ def receive_byte(socket) -> bytes:
     return socket.recv(1)
 
 
-def receive_data(length, socket) -> bytes:
-    d = b''
-    for i in range(length):
-        try:
-            d += receive_byte(socket)
-        except Exception as e:
-            print(e)
-            return d
+def receive_data(socket) -> bytes:
+    d = socket.recv(BUFFER)
     return d
 
 
-def receive_ports(socket, length) -> list:
-    ports = []
-    for i in range(length):
-        try:
-            ports.append(int.from_bytes(receive_data(2, socket), "little"))
-        except Exception as e:
-            print(e)
-            return ports
-    return ports
+def receive_message(socket) -> dict:
+    data = receive_data(socket).decode('utf-8')
+    print(data)
+    return json.loads(data)

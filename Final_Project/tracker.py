@@ -3,7 +3,7 @@ from threading import Thread
 
 from numpy import byte
 from utils import *
-#from _thread import *
+import json
 
 
 class Tracker(Thread):
@@ -27,56 +27,46 @@ class Tracker(Thread):
             # if "n" == input("\ncontinue ?\n"):
             #    break
 
-    def get_length(self, socket):
-        return int.from_bytes(receive_data(1, socket), 'little')
-
-    def get_file_name(self, length, socket) -> str:
-        data = receive_data(length, socket)
-        return data.decode("utf-8")
-
-    def handle_upload_message(self, socket, address):
+    def handle_upload_message(self, socket, message, address):
         port = address[1]
-        length = self.get_length(socket)
-        name = self.get_file_name(length, socket)
-        print(name)
+        name = message["name"]
+        self.add_uploader(name, port)
+        # if not (name in self.peers):
+        #     self.peers[name] = {port}
+        # self.peers[name].add(port)
+        socket.close()
+
+    def find_ports(self, name) -> list:
+        ports = []
+        if name in self.peers:
+            for port in self.peers[name]:
+                ports.append(port)
+        return ports
+
+    def add_uploader(self, name, port) -> None:
         if not (name in self.peers):
             self.peers[name] = {port}
         self.peers[name].add(port)
-        socket.close()
 
-    def handle_receive_message(self, socket, address):
+    def handle_receive_message(self, socket, message, address) -> None:
         port = address[1]
-        length = self.get_length(socket)
-        name = self.get_file_name(length, socket)
-        self.send_ports(socket, name)
-        print(name)
+        name = message["name"]
+        ports = self.find_ports(name)
+        message = {"ports": ports}
+        send_message(message, socket)
 
-    def read_type(self, socket, address) -> int:
+    def read_type(self, socket, message, address) -> int:
         type = receive_data(1, socket)
         return int.from_bytes(type, "little")
 
-    def read_message(self, socket, address):
-        type = self.read_type(socket, address)
-        print(type)
-        if type == 1:
-            self.handle_upload_message(socket, address)
-        elif type == 0:
-            self.handle_receive_message(socket, address)
-
-        print(self.peers)
-
-    def send_ports(self, socket, movie):
-        print(movie in self.peers)
-        if movie in self.peers:
-            length = len(self.peers[movie])
-            message = int.to_bytes(length, length=1, byteorder="little")
-            for port in self.peers[movie]:
-                message += int.to_bytes(port, length=2, byteorder="little")
-        else:
-            length = 0
-            message = int.to_bytes(length, length=1, byteorder="little")
-
-        send_message(message, socket)
+    def read_message(self, socket, address) -> None:
+        message = receive_message(socket)  # self.read_type(socket, address)
+        type = message['type']
+        if type == UPLOADING:
+            self.handle_upload_message(socket, message, address)
+        elif type == RECEIVING:
+            self.handle_receive_message(socket, message, address)
+        return
 
 
 def main():
